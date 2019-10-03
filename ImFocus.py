@@ -20,9 +20,6 @@ class ImFocus:
         self.interpolation_order = interpolation_oreder
         self.load_new_img_set(path)
 
-    def fix_motion(self):
-        pass  # TODO should make motion between images fixed.
-
     def load_new_img_set(self, path):
         self.imgs = load_folder(path)
         self.num_images = self.imgs.shape[0]
@@ -47,9 +44,9 @@ class ImFocus:
         temp_lst = []
         for i in indices:
             temp_lst.append(self.shift_image(self.imgs[i], shift_array[i]))
-        self.mutex.acquire_lock()
-        lst += temp_lst
-        self.mutex.release_lock()
+        self.mutex.acquire()
+        lst.extend(temp_lst)
+        self.mutex.release()
 
     def parallel_shift(self, shift_val):
         """
@@ -68,14 +65,12 @@ class ImFocus:
         img_lst = []
         thread_lst = []
         indices = np.arange(shift_array.shape[0])
-        size = shift_array.shape[0] // self.num_threads
-        i = 0
-        while (i * size) < self.num_images:
-            t = Thread(target=ImFocus.shift_for_focus, args=(self, shift_array, indices[i * size: (i + 1) * size],
-                                                             img_lst))
-            thread_lst.append(t)
+
+        for indices in np.array_split(indices, shift_array.shape[0] // self.num_threads):
+            t = Thread(target=ImFocus.shift_for_focus, args=(self, shift_array, indices, img_lst))
             t.start()
-            i += 1
+            thread_lst.append(t)
+
         for t in thread_lst:
             t.join()
         return img_lst
@@ -96,8 +91,8 @@ class ImFocus:
 
 
 if __name__ == '__main__':
-    path1 = '/Users/yonatanweiss/PycharmProjects/lightfield/drive-download-20180627T063135Z-001/Pebbles-Stanford-1'
-    path2 = '/Users/yonatanweiss/PycharmProjects/lightfield/drive-download-20180627T063135Z-001/Chess-small'
-    path3 = '/Users/yonatanweiss/PycharmProjects/lightfield/drive-download-20180627T063135Z-001/Banana'
+    path1 = '/Users/jonathanweiss/Developer/git/threadedLightField/lightField/Pebbles-Stanford-2'
 
-    focus_object = ImFocus(path1, 4)
+    focus_object = ImFocus(path1, 2)
+
+    show(focus_object.median_focus(-5.5))
