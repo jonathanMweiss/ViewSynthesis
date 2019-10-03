@@ -24,31 +24,15 @@ class ImFocus:
         self.imgs = load_folder(path)
         self.num_images = self.imgs.shape[0]
 
-    def shift_image(self, im, shift):
-        fractional, integral = np.modf(shift)
-        if fractional.any():
-            order = self.interpolation_order
-        else:  # Disable interpolation
-            order = 0
-        return ndimage.shift(im, shift, order=order)
-
-    def max_shift_possible(self):
-        """
-        calculate the wanted possible shift for image,
-        determines it by the max value the left most\ right most can take in order to still
-            have an effect on the refocus..
-        """
-        return self.imgs.shape[2] / (self.num_images // 2)
-
-    def shift_for_focus(self, shift_array, indices, lst):
+    def shift_and_insert_to_list(self, shift_array, indices, lst):
         temp_lst = []
         for i in indices:
-            temp_lst.append(self.shift_image(self.imgs[i], shift_array[i]))
+            temp_lst.append(shift_image(self.imgs[i], shift_array[i]))
         self.mutex.acquire()
         lst.extend(temp_lst)
         self.mutex.release()
 
-    def parallel_shift(self, shift_val):
+    def _parallel_shift(self, shift_val):
         """
         assumes translation between imgs is fixed,
         computes the relative shift between the pictures.
@@ -67,7 +51,7 @@ class ImFocus:
         indices = np.arange(shift_array.shape[0])
 
         for indices in np.array_split(indices, shift_array.shape[0] // self.num_threads):
-            t = Thread(target=ImFocus.shift_for_focus, args=(self, shift_array, indices, img_lst))
+            t = Thread(target=ImFocus.shift_and_insert_to_list, args=(self, shift_array, indices, img_lst))
             t.start()
             thread_lst.append(t)
 
@@ -79,20 +63,18 @@ class ImFocus:
         """
         compute the mean shift between images.
         """
-        mean_img_lst = self.parallel_shift(shift_val)
+        mean_img_lst = self._parallel_shift(shift_val)
         return np.clip(np.sum(mean_img_lst, axis=0) / self.num_images, 0, 1)
 
     def median_focus(self, shift_val):
         """
         compute the median shift between images.
         """
-        img_lst = self.parallel_shift(shift_val)
+        img_lst = self._parallel_shift(shift_val)
         return np.clip(np.median(img_lst, axis=0), 0, 1)
 
 
 if __name__ == '__main__':
-    path1 = '/Users/jonathanweiss/Developer/git/threadedLightField/lightField/Pebbles-Stanford-2'
-
-    focus_object = ImFocus(path1, 2)
-
+    path = '/Users/jonathanweiss/Developer/git/threadedLightField/lightField/Pebbles-Stanford-2'
+    focus_object = ImFocus(path, 2)
     show(focus_object.median_focus(-5.5))
