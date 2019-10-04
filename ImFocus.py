@@ -75,6 +75,6 @@ class ImFocus:
 
 
 if __name__ == '__main__':
-    path = '/Users/jonathanweiss/Developer/git/threadedLightField/lightField/Pebbles-Stanford-2'
+    path = 'Pebbles-Stanford-2'
     focus_object = ImFocus(path, 2)
     show(focus_object.median_focus(-5.5))
