@@ -4,6 +4,7 @@ Utils
 
 import numpy as np
 import matplotlib.pyplot as plt
+from threading import Thread, Lock
 from PIL import Image
 from scipy import ndimage
 import os
@@ -43,23 +44,27 @@ def check_if_img(filename):
     return filename[pos + 1:].lower() in IMG_TYPE_LIST
 
 
+def _read_images_in_chunks(folder_name, chunk, image_list, lock):
+    for i, image_name in chunk:
+        image = readimg('/'.join([folder_name, image_name]))
+        image_list[int(i)] = image
+
+
 def load_folder(folder_name, num_threads=6):
     """
     load all imgs from a file and sorts them according to their names.
     """
-    ret_val = [filename for filename in os.listdir(folder_name) if check_if_img(filename)]
-    ret_val.sort()
-    return np.array([readimg(folder_name + "/" + img_name) for img_name in ret_val])
-
-
-def convert_to_pil(arr):
-    return Image.fromarray((255 * np.clip(arr, 0, 1)).astype('uint8'))
-
-
-def im2Pil(img):
-    '''
-    Convert a double image to uint8 format image
-    @param im: double image
-    @return: uint8 im
-    '''
-    return Image.fromarray((255 * np.clip(img, 0, 1)).astype('uint8'))
+    file_names = [filename for filename in os.listdir(folder_name) if check_if_img(filename)]
+    file_names.sort()
+    sorted_images_with_indices = list(zip(range(len(file_names)), file_names))
+    chunks = np.array_split(sorted_images_with_indices, num_threads)
+    images = [None] * len(file_names)
+    thread_lst = []
+    lock = Lock()
+    for chunk in chunks:
+        t = Thread(target=_read_images_in_chunks, args=(folder_name, chunk, images, lock))
+        t.start()
+        thread_lst.append(t)
+    for t in thread_lst:
+        t.join()
+    return np.array(images)

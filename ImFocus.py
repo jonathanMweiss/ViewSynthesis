@@ -21,7 +21,7 @@ class ImFocus:
         self.load_new_img_set(path)
 
     def load_new_img_set(self, path):
-        self.imgs = load_folder(path)
+        self.imgs = load_folder(path, self.num_threads)
         self.num_images = self.imgs.shape[0]
 
     def shift_and_insert_to_list(self, shift_array, indices, lst):

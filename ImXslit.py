@@ -87,8 +87,7 @@ def render_image(image_set, shifts, beta, alpha, start, end):
 if __name__ == '__main__':
 
     path_folder = 'train-in-snow'
-
-    images = load_folder(path_folder)  # np.array([readimg(path_folder + "/" + img_name) for img_name in ret_val])
+    images = load_folder(path_folder, 6)
 
     # computing shifts for all images:
     imgNum = images.shape[0]
@@ -109,7 +108,7 @@ if __name__ == '__main__':
     alpha = 3
     start, end = 0, width - 1
 
-    a = render_image(images, shifts, beta, alpha, start, end)
-    plt.imshow(a)
+    rendered_image = render_image(images, shifts, beta, alpha, start, end)
+    plt.imshow(rendered_image)
     plt.show()
     print("done")
