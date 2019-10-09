@@ -29,11 +29,13 @@ def make_xslit(images, centers, bandwidths, shifts):
     return an xslit image.
     """
     stitched_img = images[0, :,
-                   centers[0].astype(np.int):np.floor(centers[0] + bandwidths[0] + shifts[0][1] / 2).astype(np.int)]
+                   centers[0].astype(np.int):np.floor(
+                       centers[0] + bandwidths[0] + shifts[0][1] / 2).astype(np.int)]
 
     for i in range(1, images.shape[0] - 1):
         if centers[i] >= 0:
-            left_crop = np.ceil(centers[i] - bandwidths[i - 1] - shifts[i - 1][1] / 2).astype(np.int)
+            left_crop = np.ceil(centers[i] - bandwidths[i - 1] - shifts[i - 1][1] / 2).astype(
+                np.int)
             right_crop = np.floor(centers[i] + bandwidths[i] + shifts[i][1] / 2).astype(np.int)
             stitched_img = np.hstack((stitched_img, images[i, :, left_crop:right_crop]))
         else:  # TODO need to check th values of a decending order.
@@ -41,7 +43,8 @@ def make_xslit(images, centers, bandwidths, shifts):
             return stitched_img
     i = images.shape[0] - 1
     return np.hstack((stitched_img, images[i, :,
-                                    np.ceil(centers[i] - bandwidths[i - 1] - shifts[i - 1][1] / 2).astype(np.int):
+                                    np.ceil(centers[i] - bandwidths[i - 1] - shifts[i - 1][
+                                        1] / 2).astype(np.int):
                                     np.ceil(centers[i]).astype(np.int)]))
 
 
@@ -60,7 +63,7 @@ def make_panorama(images, shifts, center_pos):
     return panorama
 
 
-def render_image(image_set, shifts, beta, alpha, start, end):
+def _compute(image_set, shifts, beta, alpha, start, end):
     """
     Makes panorama from every image aviliable.
     Makes Xslit according to alpha and beta given.
@@ -84,31 +87,29 @@ def render_image(image_set, shifts, beta, alpha, start, end):
         return make_xslit(images, centers, bandwidths, new_shifts)
 
 
-if __name__ == '__main__':
+def render_image(images, b, a, start, end):
+    img_num = images.shape[0]
+    shifts = np.zeros([img_num - 1, 2])
 
+    for i in range(img_num - 1):
+        shifts[i], _, _ = register_translation(images[i, :, :, 0], images[i + 1, :, :, 0], 100)
+
+    for i in range(img_num - 1):
+        images[i + 1] = shift_image(images[i + 1], np.array([shifts[i][0], 0, 0]))
+
+    return _compute(images, shifts, b, a, start, end)
+
+
+if __name__ == '__main__':
     path_folder = 'train-in-snow'
     images = load_folder(path_folder, 6)
 
-    # computing shifts for all images:
-    imgNum = images.shape[0]
-    shifts = np.zeros([imgNum - 1, 2])
-
-    for i in range(imgNum - 1):
-        shifts[i], _, _ = register_translation(images[i, :, :, 0], images[i + 1, :, :, 0], 100)
-        correction = np.array([shifts[i][0], 0, 0])
-
-    # making small corrections to images.
-    for i in range(imgNum - 1):
-        correction = np.array([shifts[i][0], 0, 0])
-        images[i + 1] = shift_image(images[i + 1], correction)
-
-    translation = np.sum(shifts, axis=0)[1]
     width = images[0].shape[1]
     beta = 0
     alpha = 3
     start, end = 0, width - 1
 
-    rendered_image = render_image(images, shifts, beta, alpha, start, end)
+    rendered_image = render_image(images, beta, alpha, 0, width - 1)
     plt.imshow(rendered_image)
     plt.show()
     print("done")
