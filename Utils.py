@@ -52,7 +52,7 @@ def _read_images_in_chunks(folder_name, chunk, image_list, lock):
 
 def load_folder(folder_name, num_threads=6):
     """
-    load all imgs from a file and sorts them according to their names.
+    load all imgs from a folder and sorts them according to their names.
     """
     file_names = [filename for filename in os.listdir(folder_name) if check_if_img(filename)]
     file_names.sort()
@@ -71,4 +71,8 @@ def load_folder(folder_name, num_threads=6):
 
 
 def img2cv2(img):
-    return np.clip(img * 255, 0, 255).astype(np.uint8)
+    """
+    :param img: a float RGB image in the range [0,1]
+    :return: BGR image in range [0, 255]
+    """
+    return np.flip(np.clip(img * 255, 0, 255).astype(np.uint8), axis=2)
