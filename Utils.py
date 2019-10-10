@@ -68,3 +68,7 @@ def load_folder(folder_name, num_threads=6):
     for t in thread_lst:
         t.join()
     return np.array(images)
+
+
+def img2cv2(img):
+    return np.clip(img * 255, 0, 255).astype(np.uint8)
