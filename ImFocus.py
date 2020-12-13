@@ -6,9 +6,9 @@ thus we know how much shift there should be to get the closest item
 
 """
 
-from Utils import *
+from Utils import load_folder, INTERPOLATION_ORDER, shift_image
 from threading import Thread, Lock
-from scipy import ndimage
+import numpy as np
 
 
 class ImFocus:
@@ -73,8 +73,7 @@ class ImFocus:
         img_lst = self._parallel_shift(shift_val)
         return np.clip(np.median(img_lst, axis=0), 0, 1)
 
-
-if __name__ == '__main__':
-    path = 'Pebbles-Stanford-2'
-    focus_object = ImFocus(path, 2)
-    show(focus_object.median_focus(-5.5))
+# if __name__ == '__main__':
+#     path = 'Pebbles-Stanford-2'
+#     focus_object = ImFocus(path, 2)
+#     show(focus_object.median_focus(-5.5))

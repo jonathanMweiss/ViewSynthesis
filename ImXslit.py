@@ -1,4 +1,4 @@
-from Utils import shift_image, load_folder
+from Utils import load_folder,shift_image
 
 import numpy as np
 from skimage.feature import register_translation
@@ -63,7 +63,7 @@ def make_panorama(images, shifts, center_pos):
     return panorama
 
 
-def _compute(image_set, shifts, beta, alpha, start, end):
+def compute(image_set, shifts, beta, alpha, start, end):
     """
     Makes panorama from every image aviliable.
     Makes Xslit according to alpha and beta given.
@@ -87,7 +87,7 @@ def _compute(image_set, shifts, beta, alpha, start, end):
         return make_xslit(images, centers, bandwidths, new_shifts)
 
 
-def render_image(images, b, a, start, end):
+def get_shifts_and_corrected_imgs(images):
     img_num = images.shape[0]
     shifts = np.zeros([img_num - 1, 2])
 
@@ -96,9 +96,12 @@ def render_image(images, b, a, start, end):
 
     for i in range(img_num - 1):
         images[i + 1] = shift_image(images[i + 1], np.array([shifts[i][0], 0, 0]))
+    return images, shifts
 
-    return _compute(images, shifts, b, a, start, end)
 
+def render_image(images, b, a, start, end):
+    images, shifts = get_shifts_and_corrected_imgs(images)
+    return compute(images, shifts, b, a, start, end)
 
 if __name__ == '__main__':
     path_folder = 'train-in-snow'
