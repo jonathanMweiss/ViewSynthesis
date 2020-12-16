@@ -1,3 +1,5 @@
+example: https://youtu.be/AGaS3B4am7Q
+
 Implementation of synthetic aperture:
 http://www-vlsi.stanford.edu/people/alum/pdf/0703_Vaibhav_Vaish_Synthetic_Aperature_Imaging.pdf
 
